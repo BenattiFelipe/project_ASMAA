@@ -25,8 +25,10 @@ entry6 = [-23, 313, 90, 1, 0]
 entry7 = [1148, 124 , -90, -1, 0]
 entry8 = [1148, 96 , -90, -1, 0]
 entry9 = [1148, 154 , -90, -1, 0]
+entry10 = [930, 55, -90, -1, 0, 'entry1']
+entry11 = [490, 355, 90, 1, 0, 'entry2']
 
-entry = entry1
+entry = entry11
 
 #['road1', 'road3', 'pass2', 'road8', 'road9', 'road10', 'road9', 'road8', 'pass4', 'road7', 'pass3', 'road8', 'pass4', 'road7', 'pass1', 'road4', 'road2']
 
@@ -220,6 +222,43 @@ def check_rotation(x, y, turn):
             screen.blit(car_1.figure, (x, y))
         else:
             screen.blit(car_1.figure, (x, y))
+    
+    elif turn == turn21 and (x < turn[0][1] or y > turn[1][1]):
+        if y > turn[1][1]:
+            car_1.pos[2] = turn[1][2]
+            car_1.figure = pygame.transform.rotate(car_1.figure, car_1.pos[2])
+            car_1.vel[1] = 0
+            car_1.vel[0] = -1
+            car_1.pos[3] = 'road5'
+            turn = define_rotation()
+            screen.blit(car_1.figure, (x, y))
+        elif car_1.pos[2] != turn[0][2]:
+            car_1.pos[2] = turn[0][2]
+            car_1.figure = pygame.transform.rotate(car_1.figure, car_1.pos[2] +90)
+            car_1.vel[1] = 1
+            car_1.vel[0] = 0
+            car_1.pos[3] = 'road5'
+            screen.blit(car_1.figure, (x, y))
+        else:
+            screen.blit(car_1.figure, (x, y))
+    elif turn == turn22 and (x > turn[0][1] or y < turn[1][1]):
+        if y < turn[1][1]:
+            car_1.pos[2] = turn[1][2]
+            car_1.figure = pygame.transform.rotate(car_1.figure, car_1.pos[2])
+            car_1.vel[1] = 0
+            car_1.vel[0] = 1
+            car_1.pos[3] = 'road10'
+            turn = define_rotation()
+            screen.blit(car_1.figure, (x, y))
+        elif car_1.pos[2] != turn[0][2]:
+            car_1.pos[2] = turn[0][2]
+            car_1.figure = pygame.transform.rotate(car_1.figure, car_1.pos[2] -90)
+            car_1.vel[1] = -1
+            car_1.vel[0] = 0
+            car_1.pos[3] = 'road10'
+            screen.blit(car_1.figure, (x, y))
+        else:
+            screen.blit(car_1.figure, (x, y))
     else: 
         screen.blit(car_1.figure, (x, y))
     return turn
@@ -246,6 +285,8 @@ turn17 = ['turn17']
 turn18 = ['turn18']
 turn19 = [['road7', 640, 180], ['road7', 255, -90]]
 turn20 = [['road7', 406, 0], ['road7', 190, 90]]
+turn21 = [['road5', 887, 0], ['road5', 95, -90]]
+turn22 = [['road10', 530, 180], ['road10', 315, -90]]
 
 def define_rotation():
     if car_1.intentions == []:
@@ -298,6 +339,10 @@ def define_rotation():
         turn = turn19
     elif car_1.intentions[0] == 'road4' and car_1.pos[3] == 'road7' and car_1.pos[0] > 200:
         turn = turn20
+    elif car_1.pos[3] == 'entry1':
+        turn = turn21
+    elif car_1.pos[3] == 'entry2':
+        turn = turn22
     else:
         turn = None
 
@@ -307,8 +352,8 @@ turn = define_rotation()
 running = True
 while running:
     window.blit(bg_img,(0,0))
-    carX_change = 0.6*car_1.vel[0]
-    carY_change = 0.6*car_1.vel[1]
+    carX_change = 0.2*car_1.vel[0]
+    carY_change = 0.2*car_1.vel[1]
     #entry[2] = 1
     #carImg = pygame.transform.rotate(carImg, entry[2])
     for event in pygame.event.get():

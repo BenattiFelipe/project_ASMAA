@@ -29,7 +29,8 @@ for i in range(50):
 path = ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2']
 cars = []
 for i in range(50):
-    cars.append(Car('#car'+str(i),[entry[0], entry[1], entry[2], entry[5]], entry[3:5], ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2'], carImg[i], 0, 0))
+    cars.append(Car('#car'+str(i),[entry[0], entry[1], entry[2], entry[5]], entry[3:5], ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2'], carImg[i], 0, 0, 0, 0))
+
 
 
 def vehicle(x, y, j):
@@ -185,18 +186,22 @@ def define_rotation(car):
         turn = None
 
     return turn
-count = [0 for i in range(len(cars))]
-turn = [define_rotation(cars[j]) for j in range(len(cars))]
+for car in cars:
+    car.turn = define_rotation(car)
 inside = [cars[0]]    
 running = True
 i = 0
 k = 0
 explosions = []
+marcador = True
 while running:
     i += 1
     if i == 100:
         i = 0
-        inside.append(cars[k])
+        if marcador:
+            inside.append(cars[k])
+        if len(inside) >= 10:
+            marcaror = False
         k += 1
     window.blit(bg_img,(0,0))
     delete = []
@@ -205,21 +210,21 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
         
-        carX_change = 0.3*cars[j].vel[0]
-        carY_change = 0.3*cars[j].vel[1]
+        carX_change = 0.8*cars[j].vel[0]
+        carY_change = 0.8*cars[j].vel[1]
         #entry[2] = 1
         #carImg = pygame.transform.rotate(carImg, entry[2])
         
         cars[j].pos[0] += carX_change
         cars[j].pos[1] += carY_change
-        if count[j] == 0 or count[j] > 100:
-            turn[j] = check_rotation(turn[j], cars[j])
-            count[j] = 0
-        if count[j] > 0:
+        if cars[j].count == 0 or cars[j].count > 100:
+            cars[j].turn = check_rotation(cars[j].turn, cars[j])
+            cars[j].count = 0
+        if cars[j].count > 0:
 
-            count[j] += 1
-        if (turn[j] == turn10 or turn[j] == turn11 or turn[j] == turn12 or turn[j] == turn13 or turn[j] == turn15 or turn[j] == turn16 or turn[j] == turn17 or turn[j] == turn18) and count[j] == 0:
-            count[j] = 1
+            cars[j].count += 1
+        if (cars[j].turn == turn10 or cars[j].turn == turn11 or cars[j].turn == turn12 or cars[j].turn == turn13 or cars[j].turn == turn15 or cars[j].turn == turn16 or cars[j].turn == turn17 or cars[j].turn == turn18) and cars[j].count == 0:
+            cars[j].count = 1
         for m in range(len(inside)):
             if cars[m] != cars[j]:            
                 if isCollision(cars[j].pos[0], cars[m].pos[0], cars[j].pos[1], cars[m].pos[1], 16, 16):
@@ -228,7 +233,7 @@ while running:
                         delete.append(cars[m])
                     if cars[j] not in delete:
                         delete.append(cars[j])
-        
+        #print(cars[j].name, ', x = ',cars[j].pos[0], ',y = ', cars[j].pos[1], cars[j].intentions)
         vehicle(cars[j].pos[0], cars[j].pos[1], j)
     for m in range(len(explosions)):
         if explosions[m][3] <= 20:
@@ -240,6 +245,7 @@ while running:
     for value in delete:
         inside2 = []
         for carro in inside:
+            
             if carro.name != value.name:
                 inside2.append(carro)
         inside = inside2

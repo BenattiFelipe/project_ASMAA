@@ -1,5 +1,4 @@
 from static import *
-import pygame
 
 def check_rotation(turn, car):
         #Rotation type 1: 
@@ -59,8 +58,10 @@ def check_rotation(turn, car):
             car.pos[1] += 30
             car.pos[3] = 'road7'
         del car.intentions[0]
+        turn = define_rotation(car)
+        return turn
 
-
+    return turn
 def rotation_type_1(turn, rot, vel_x, vel_y, new_road, car):
     print(turn)
     car.pos[2] = turn[2]
@@ -69,7 +70,7 @@ def rotation_type_1(turn, rot, vel_x, vel_y, new_road, car):
     car.vel[0] = vel_y
     car.pos[3] = new_road
     del car.intentions[0]
-
+    return define_rotation(car)
 
 def rotation_type_2(turn, rot1, rot2, vel_x1, vel_y1, vel_x2, vel_y2, new_road, car):
 
@@ -80,12 +81,12 @@ def rotation_type_2(turn, rot1, rot2, vel_x1, vel_y1, vel_x2, vel_y2, new_road, 
         car.vel[0] = vel_x1
         car.pos[3] = new_road
         del car.intentions[0]
-
+        return define_rotation(car)
     elif car.pos[2] != turn[0][2]:
         car.pos[2] = turn[0][2]
         car.figure = pygame.transform.rotate(car.figure, car.pos[2] + rot2)
         car.vel[1] = vel_y2
         car.vel[0] = vel_x2
-
+    return turn
     
             

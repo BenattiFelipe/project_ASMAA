@@ -1,7 +1,11 @@
 import numpy as np
 from utils import pos_to_index
 from cars import Car
+from roads import Road
 import re
+import random
+import static
+from datetime import datetime
 
 
 class Environment:
@@ -123,4 +127,14 @@ class Environment:
     def delete_car(self,car_name):
         self.cars.pop(car_name)
 
-        
+cars = []
+for i in range(100):
+    entry = static.entries[random.randint(0, 10)]
+    exit = static.exits[random.randint(0, 10)]
+    position = static.define_position(entry)
+    velocity = static.define_velocity(entry)
+    cars.append('car#' + str(i), position, velocity, 0, [24, 12], datetime.now, exit, 0, 0)
+
+roads = ['road5', 'road6', 'road7']
+
+

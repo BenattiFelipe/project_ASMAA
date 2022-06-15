@@ -1,13 +1,15 @@
 import pygame
-from models import Car
+from models import Car, System
 import numpy as np
 from static import *
 import math
+import random
+from datetime import datetime
 
 #['road1', 'road3', 'pass2', 'road8', 'road9', 'road10', 'road9', 'road8', 'pass4', 'road7', 'pass3', 'road8', 'pass4', 'road7', 'pass1', 'road4', 'road2']
 
 #entry = [150, 150, 0, 0, 0]
-entry = entry1
+entry = entry8
 
 pygame.init()
 
@@ -22,16 +24,23 @@ window = pygame.display.set_mode((width,height))
 bg_img = pygame.image.load('road.png')
 bg_img = pygame.transform.scale(bg_img,(width,height))
 carImg = []
-for i in range(50):
+for i in range(200):
     carImg.append(pygame.image.load('car2.png'))
-for i in range(50):
-    carImg[i] = pygame.transform.rotate(carImg[i], entry[2])
+#for i in range(200):
+    #carImg[i] = pygame.transform.rotate(carImg[i], entry[2])
 path = ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2']
 cars = []
-for i in range(50):
-    cars.append(Car('#car'+str(i),[entry[0], entry[1], entry[2], entry[5]], entry[3:5], ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2'], carImg[i], 0, 0, 0, 0))
-
-
+for i in range(200):
+    entry = define_entry(entries)
+    exit = exits[random.randint(0, len(exits)-1)]
+    position = define_position(entry)
+    direction = define_velocity(entry)
+    intentions = []
+    if entry == entry10:
+        intentions.append('road5')
+    if entry == entry11:
+        intentions.append('road10')
+    cars.append(Car('car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, datetime.now, entry, exit))
 
 def vehicle(x, y, j):
     screen.blit(cars[j].figure, (x, y))
@@ -71,6 +80,10 @@ def check_rotation(turn, car):
         return rotation_type_2(turn, 0, 90, -1, 0, 0, 1, 'road5', car)
     elif turn == turn22 and (car.pos[0] > turn[0][1] or car.pos[1]  < turn[1][1]):
         return rotation_type_2(turn, 0, -90, 1, 0, 0, -1, 'road10', car)
+    elif turn == turn23 and (car.pos[0] > turn[0][1] or car.pos[1]  > turn[1][1]):
+        return rotation_type_2(turn, 180, 90, 1, 0, 0, 1, 'out1', car)
+    elif turn == turn24 and (car.pos[0] < turn[0][1] or car.pos[1] < turn[1][1]):
+        return rotation_type_2(turn, 180, 90, -1, 0, 0,-1, 'out2', car)
     #Transition
     elif turn == turn10 or turn == turn11 or turn == turn12 or turn == turn13 or turn == turn15 or turn == turn16 or turn == turn17 or turn == turn18:
         if turn == turn10:
@@ -103,30 +116,34 @@ def check_rotation(turn, car):
 
     return turn
 def rotation_type_1(turn, rot, vel_x, vel_y, new_road, car):
-    print(turn)
+
     car.pos[2] = turn[2]
     car.figure = pygame.transform.rotate(car.figure, car.pos[2] + rot)
-    car.vel[1] = vel_x
-    car.vel[0] = vel_y
+    car.direction[1] = vel_x
+    car.direction[0] = vel_y
     car.pos[3] = new_road
     del car.intentions[0]
     return define_rotation(car)
 
 def rotation_type_2(turn, rot1, rot2, vel_x1, vel_y1, vel_x2, vel_y2, new_road, car):
-    print(turn)
-    if (car.pos[1] > turn[1][1] and (turn == turn9 or turn == turn19 or turn == turn20 or turn == turn21)) or (car.pos[1] < turn[1][1] and (turn == turn14 or turn == turn22)):
+
+    if (car.pos[1] > turn[1][1] and (turn == turn9 or turn == turn19 or turn == turn20 or turn == turn21 or turn == turn23)) or (car.pos[1] < turn[1][1] and (turn == turn14 or turn == turn22 or turn == turn24)):
         car.pos[2] = turn[1][2]
         car.figure = pygame.transform.rotate(car.figure, car.pos[2] + rot1)
-        car.vel[1] = vel_y1
-        car.vel[0] = vel_x1
+        car.direction[1] = vel_y1
+        car.direction[0] = vel_x1
         car.pos[3] = new_road
         del car.intentions[0]
         return define_rotation(car)
     elif car.pos[2] != turn[0][2]:
         car.pos[2] = turn[0][2]
         car.figure = pygame.transform.rotate(car.figure, car.pos[2] + rot2)
-        car.vel[1] = vel_y2
-        car.vel[0] = vel_x2
+        car.direction[1] = vel_y2
+        car.direction[0] = vel_x2
+        if turn == turn19:
+            car.pos[3] = 'return1'
+        if turn == turn14:
+            car.pos[3] = 'return2'
     return turn
     
 def isCollision(x1, x2, y1, y2, size_x, size_y):
@@ -164,7 +181,7 @@ def define_rotation(car):
         turn = turn12
     elif car.intentions[0] == 'road8' and car.pos[3] == 'road9':
         turn = turn13
-    elif car.intentions[0] == 'road7' and car.pos[3] == 'road8' and car.pos[0] < 785:
+    elif car.intentions[0] == 'road7' and (car.pos[3] == 'road8' or car.pos[3] ==  'return2'):
         turn = turn14 
     elif car.intentions[0] == 'road6' and car.pos[3] == 'road7':
         turn = turn15
@@ -174,7 +191,7 @@ def define_rotation(car):
         turn = turn17
     elif car.intentions[0] == 'road7' and car.pos[3] == 'road6':
         turn = turn18
-    elif car.intentions[0] == 'road8' and car.pos[3] == 'road7' and car.pos[0] > 640:
+    elif car.intentions[0] == 'road8' and (car.pos[3] == 'road7' or car.pos[3] == 'return1'):
         turn = turn19
     elif car.intentions[0] == 'road4' and car.pos[3] == 'road7' and car.pos[0] > 200:
         turn = turn20
@@ -182,59 +199,95 @@ def define_rotation(car):
         turn = turn21
     elif car.pos[3] == 'entry2':
         turn = turn22
+    elif car.intentions[0] == 'out1' and car.pos[3] == 'road10':
+        turn = turn23
+    elif car.intentions[0] == 'out2' and car.pos[3] == 'road5':
+        turn = turn24
     else:
         turn = None
 
     return turn
+    
+
 for car in cars:
     car.turn = define_rotation(car)
-inside = [cars[0]]    
+inside = [cars[0]]   
 running = True
+
 i = 0
-k = 0
+k = 1
+system = System()
 explosions = []
-marcador = True
 while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
     i += 1
-    if i == 100:
+    bool = True
+    if i == 60:
         i = 0
-        if marcador:
-            inside.append(cars[k])
-        if len(inside) >= 10:
-            marcaror = False
+        inside.append(cars[k])
         k += 1
     window.blit(bg_img,(0,0))
     delete = []
     for j in range(len(inside)):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        
-        carX_change = 0.8*cars[j].vel[0]
-        carY_change = 0.8*cars[j].vel[1]
-        #entry[2] = 1
-        #carImg = pygame.transform.rotate(carImg, entry[2])
-        
-        cars[j].pos[0] += carX_change
-        cars[j].pos[1] += carY_change
-        if cars[j].count == 0 or cars[j].count > 100:
-            cars[j].turn = check_rotation(cars[j].turn, cars[j])
-            cars[j].count = 0
-        if cars[j].count > 0:
 
-            cars[j].count += 1
-        if (cars[j].turn == turn10 or cars[j].turn == turn11 or cars[j].turn == turn12 or cars[j].turn == turn13 or cars[j].turn == turn15 or cars[j].turn == turn16 or cars[j].turn == turn17 or cars[j].turn == turn18) and cars[j].count == 0:
-            cars[j].count = 1
+
+        carX_change = (1/50)*inside[j].vel*inside[j].direction[0]
+        carY_change = (1/50)*inside[j].vel*inside[j].direction[1]
+
+        inside[j].pos[0] += carX_change
+        inside[j].pos[1] += carY_change
+
+
+        if (inside[j].pos[1] == 55 and inside[j].pos[0] < 876) or (inside[j].pos[0] < 300 and inside[j].pos[3] == 'road5' and inside[j].exit[1] == 'out2') or (inside[j].pos[3] == 'road7' and inside[j].pos[0] < 640) or (inside[j].pos[3] == 'road8' and inside[j].pos[0] > 785) or (inside[j].pos[1] == 355 and inside[j].pos[0] > 544) or (inside[j].pos[0] > 899 and inside[j].pos[3] == 'road10' and inside[j].exit[1] == 'out1') :
+            inside[j].turn = define_rotation(inside[j])
+            if inside[j].turn == turn19:
+                contador = 0
+                for car in inside:
+                    if car.pos[3] == 'return1':
+                        contador += 1
+                if contador > 0:
+                    inside[j].give_up = True
+            if inside[j].turn == turn14:
+                contador = 0
+                for car in inside:
+                    if car.pos[3] == 'return2':
+                        contador += 1
+                if contador > 0:
+                    inside[j].give_up = True
+            if not inside[j].give_up:
+                check_rotation(inside[j].turn, inside[j])
+        if inside[j].give_up:
+            inside[j].make_decision_free_road()
+        if inside[j].count == 0 or inside[j].count > 100:
+            inside[j].count = 0
+            inside[j].detect_car(inside[j].size[0]*7, inside)
+            action = inside[j].make_decision_free_road()
+
+            if action == 'is out':
+                delete.append(inside[j])
+            if action == 'change lane' or action == 'get out':
+                inside[j].turn = define_rotation(inside[j])
+                check_rotation(inside[j].turn, inside[j])  
+        
+        if inside[j].count > 0:
+            inside[j].count += 1
+        if (inside[j].turn == turn10 or inside[j].turn == turn11 or inside[j].turn == turn12 or inside[j].turn == turn13 or inside[j].turn == turn15 or inside[j].turn == turn16 or inside[j].turn == turn17 or inside[j].turn == turn18) and inside[j].count == 0:
+            inside[j].count = 1
+        if inside[j].count == 0 or inside[j].count > 100:
+            inside[j].count = 0
+            
         for m in range(len(inside)):
-            if cars[m] != cars[j]:            
-                if isCollision(cars[j].pos[0], cars[m].pos[0], cars[j].pos[1], cars[m].pos[1], 16, 16):
-                    explosions.append([(cars[j].pos[0] + cars[m].pos[0])/2, (cars[j].pos[1] + cars[m].pos[1])/2, pygame.image.load('bang.png'), 0])
-                    if cars[m] not in delete:
-                        delete.append(cars[m])
-                    if cars[j] not in delete:
-                        delete.append(cars[j])
-        #print(cars[j].name, ', x = ',cars[j].pos[0], ',y = ', cars[j].pos[1], cars[j].intentions)
-        vehicle(cars[j].pos[0], cars[j].pos[1], j)
+            if inside[m] != inside[j]:            
+                if isCollision(inside[j].pos[0], inside[m].pos[0], inside[j].pos[1], inside[m].pos[1], 16, 16):
+                    explosions.append([(inside[j].pos[0] + inside[m].pos[0])/2, (inside[j].pos[1] + inside[m].pos[1])/2, pygame.image.load('bang.png'), 0])
+                    if inside[m] not in delete:
+                        delete.append(inside[m])
+                    if inside[j] not in delete:
+                        delete.append(inside[j])
+
+        vehicle(inside[j].pos[0], inside[j].pos[1], j)
     for m in range(len(explosions)):
         if explosions[m][3] <= 20:
             explosions[m][3] += 1
@@ -243,6 +296,7 @@ while running:
             #del explosions[m]
     #delete = reversed(sorted(delete))
     for value in delete:
+        k -= 1
         inside2 = []
         for carro in inside:
             
@@ -254,7 +308,4 @@ while running:
             if carro.name != value.name:
                 car2.append(carro)
         cars = car2
-        print(inside[0].intentions)
-        
-        #car(carX, carY)
     pygame.display.update()

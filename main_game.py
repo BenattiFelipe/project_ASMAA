@@ -1,5 +1,5 @@
 import pygame
-from models import Car, System
+from models import Car, System, Cross
 import numpy as np
 from static import *
 import math
@@ -24,6 +24,8 @@ window = pygame.display.set_mode((width,height))
 bg_img = pygame.image.load('road.png')
 bg_img = pygame.transform.scale(bg_img,(width,height))
 carImg = []
+up_road = pygame.image.load('uper_road.png')
+up_road = pygame.transform.scale(up_road,(50,278))
 for i in range(200):
     carImg.append(pygame.image.load('car2.png'))
 #for i in range(200):
@@ -41,6 +43,10 @@ for i in range(200):
     if entry == entry11:
         intentions.append('road10')
     cars.append(Car('car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, datetime.now, entry, exit))
+
+
+def upper_road(x, y):
+    screen.blit(up_road, (x, y))
 
 def vehicle(x, y, j):
     screen.blit(cars[j].figure, (x, y))
@@ -146,7 +152,10 @@ def rotation_type_2(turn, rot1, rot2, vel_x1, vel_y1, vel_x2, vel_y2, new_road, 
             car.pos[3] = 'return2'
     return turn
     
-def isCollision(x1, x2, y1, y2, size_x, size_y):
+def isCollision(x1, x2, y1, y2, size_x, size_y, position1, position2):
+    set =  ['road1', 'road2', 'road3', 'road4'] 
+    if (position1 in set and position2 not in set) or (position1 not in set and position2 in set):
+        return False
     distance_x = abs(x1 - x2)
     distance_y = abs(y1 - y2)
     return distance_x <= size_x and distance_y <= size_y
@@ -213,7 +222,7 @@ for car in cars:
     car.turn = define_rotation(car)
 inside = [cars[0]]   
 running = True
-
+cross = Cross()
 i = 0
 k = 1
 system = System()
@@ -224,12 +233,14 @@ while running:
             running = False
     i += 1
     bool = True
-    if i == 60:
+    if i == 100:
         i = 0
         inside.append(cars[k])
         k += 1
     window.blit(bg_img,(0,0))
     delete = []
+    render = []
+    cross.define_next(inside)
     for j in range(len(inside)):
 
 
@@ -242,6 +253,7 @@ while running:
 
         if (inside[j].pos[1] == 55 and inside[j].pos[0] < 876) or (inside[j].pos[0] < 300 and inside[j].pos[3] == 'road5' and inside[j].exit[1] == 'out2') or (inside[j].pos[3] == 'road7' and inside[j].pos[0] < 640) or (inside[j].pos[3] == 'road8' and inside[j].pos[0] > 785) or (inside[j].pos[1] == 355 and inside[j].pos[0] > 544) or (inside[j].pos[0] > 899 and inside[j].pos[3] == 'road10' and inside[j].exit[1] == 'out1') :
             inside[j].turn = define_rotation(inside[j])
+
             if inside[j].turn == turn19:
                 contador = 0
                 for car in inside:
@@ -260,8 +272,8 @@ while running:
                 check_rotation(inside[j].turn, inside[j])
         if inside[j].give_up:
             inside[j].make_decision_free_road()
-        if inside[j].count == 0 or inside[j].count > 100:
-            inside[j].count = 0
+        if inside[j].pos[3] not in ['road1', 'road2', 'road3', 'road4']:
+
             inside[j].detect_car(inside[j].size[0]*7, inside)
             action = inside[j].make_decision_free_road()
 
@@ -271,23 +283,41 @@ while running:
                 inside[j].turn = define_rotation(inside[j])
                 check_rotation(inside[j].turn, inside[j])  
         
-        if inside[j].count > 0:
+        else:
+            inside[j].detect_car(inside[j].size[0]*7, inside)
+            action = inside[j].make_decision_cross()
+            inside[j].turn = define_rotation(inside[j])
+            check_rotation(inside[j].turn, inside[j])
+
+        '''if inside[j].count > 0:
             inside[j].count += 1
         if (inside[j].turn == turn10 or inside[j].turn == turn11 or inside[j].turn == turn12 or inside[j].turn == turn13 or inside[j].turn == turn15 or inside[j].turn == turn16 or inside[j].turn == turn17 or inside[j].turn == turn18) and inside[j].count == 0:
             inside[j].count = 1
         if inside[j].count == 0 or inside[j].count > 100:
-            inside[j].count = 0
+            inside[j].count = 0'''
             
         for m in range(len(inside)):
             if inside[m] != inside[j]:            
-                if isCollision(inside[j].pos[0], inside[m].pos[0], inside[j].pos[1], inside[m].pos[1], 16, 16):
+                if isCollision(inside[j].pos[0], inside[m].pos[0], inside[j].pos[1], inside[m].pos[1], 16, 16, inside[j].pos[3], inside[m].pos[3]):
                     explosions.append([(inside[j].pos[0] + inside[m].pos[0])/2, (inside[j].pos[1] + inside[m].pos[1])/2, pygame.image.load('bang.png'), 0])
                     if inside[m] not in delete:
                         delete.append(inside[m])
                     if inside[j] not in delete:
                         delete.append(inside[j])
-
-        vehicle(inside[j].pos[0], inside[j].pos[1], j)
+        if inside[j].pos[3] not in ['road1', 'road2', 'road3', 'road4']:
+            render.append([inside[j], j, True])
+        else:
+            render.append([inside[j], j, False])
+        
+    
+    
+    for value in render:
+        if value[2] == True:
+            vehicle(value[0].pos[0], value[0].pos[1], value[1])
+    upper_road(158, 80)
+    for value in render:
+        if value[2] == False:
+            vehicle(value[0].pos[0], value[0].pos[1], value[1])
     for m in range(len(explosions)):
         if explosions[m][3] <= 20:
             explosions[m][3] += 1
@@ -295,6 +325,7 @@ while running:
         #else:
             #del explosions[m]
     #delete = reversed(sorted(delete))
+
     for value in delete:
         k -= 1
         inside2 = []

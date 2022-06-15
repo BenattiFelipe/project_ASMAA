@@ -52,16 +52,16 @@ exit10 = [0, 'out1', 'road10']
 exit11 = [0, 'out2', 'road5']
 
 #entries = entries = [entry4, entry5, entry6, entry7, entry8, entry9, entry10, entry11]
-entries = [entry4, entry5, entry6, entry7, entry8, entry9, entry10, entry11]
-#exits = [exit1, exit2, exit3, exit4, exit5, exit6, exit10, exit11
-exits = [exit1, exit2, exit3, exit4, exit5, exit6, exit10, exit11]
+entries = [entry1, entry1, entry2, entry2, entry3, entry3, entry9, entry9, entry9]
+#exits = [exit1, exit2, exit3, exit4, exit5, exit6, exit9, exit10, exit11]
+exits = [exit9]
 
 def define_position(entry):
     return ([entry[0], entry[1], entry[2], entry[5]])
 
 def define_velocity(entry):
     #return [0.1*random.randint(5, 10)*entry[3], 0.1*random.randint(5, 10)*entry[4]]
-    return [0.1*10*entry[3], 0.01*random.randint(50, 100)*entry[4]]
+    return [entry[3], entry[4]]
 
 def define_entry(entries):
     new_entry = []

@@ -225,6 +225,7 @@ class Car:
         self.your_turn = False
         self.information = []
         self.give_up = False
+        self.change_lane = False
     
     def detect_car(self, radius, cars):
         self.information = []
@@ -235,14 +236,21 @@ class Car:
                 self.information.append([car.name, car.pos, car.vel, car.direction])
     
     def make_decision_free_road(self):
-        self.your_turn = False 
+        self.your_turn = False
         if self.give_up:
             return
         if is_out(self):
             #print('is out, ', self.pos[3], self.exit[1])
             return 'is out'
+        if self.change_lane == False:
+            self.count += 1
+        if self.change_lane == False and self.count >= 100:
+            self.change_lane = True
+            self.count = 0
         if self.pos[3] == 'entry1' or self.pos[3] == 'entry2' or (self.pos[3] == 'return1' and self.pos[1] < 240) or (self.pos[3] == 'return2' and self.pos[1] > 170):
             self.make_entry()
+            self.count += 1
+            self.change_lane = False
             if self.vel == 0:
                 return
         if self.pos[3] == 'return1':
@@ -259,10 +267,13 @@ class Car:
                 if is_ahead(self.pos, value[1], self.direction, value[3]):
                     if marc2 > value[2] - self.vel:
                         marc2 = value[2] - self.vel
+                        if abs(self.pos[0] - value[1][0]) < 2*self.size[0]:
+                            marc2 -= 1
                         marc = 0
             if (marc == 'do nothing' and self.vel < speed_limit[self.pos[3]]):
-                self.vel += 2 
+                self.vel += 0.1
             elif marc != 'do nothing':
+                
                 self.vel += marc2
         if self.intentions == [] and self.pos[3] != self.exit[1]:
             if self.pos[3] == 'road5':
@@ -299,14 +310,20 @@ class Car:
                     self.intentions.append('out1')
         else:
             marc = True  
+            if marc and (self.pos[3] == 'return1' or self.pos[3] == 'return2' or self.pos[3] == 'entry1' or self.pos[3] == 'entry2'):
+                self.change_lane = False
+                return 'change lane'
             for value in self.information:
                 if self.intentions!=[]:
                     if check_side(self.intentions[0], value[1][3], self.pos[0], value[1][0], self.size[0]):
                         marc = False
                         break
-            if marc:
-
+            
+        
+            if marc and self.change_lane:
+                self.change_lane = False
                 return 'change lane'
+            
             marc = 'do nothing'
             marc2 = 10000
             for value in self.information:
@@ -448,20 +465,33 @@ class Car:
                     
 def is_out(car):
     if car.pos[3] in ['road5', 'road7', 'road6'] and car.pos[0] < -23:
+        faz_print(car)
         return True
     elif car.pos[3] in ['road8', 'road9', 'road10'] and car.pos[0] > 1148:
+        faz_print(car)
         return True
     elif car.pos[3] == 'out2' and car.pos[0] <= 260:
+        faz_print(car)
         return True
     elif car.pos[3] == 'out1' and car.pos[0] >= 939:
+        faz_print(car)
         return True
     elif car.pos[3] == 'road4' and car.pos[0] < -23:
+        faz_print(car)
         return True
     elif car.pos[3] == 'road1' and car.pos[1] > 401:
+        faz_print(car)
         return True
     elif car.pos[3] == 'road2' and car.pos[1] < -23:
+        faz_print(car)
         return True
     return False
+
+def faz_print(car):
+    if car.pos[3] == car.exit[1]:
+        print('=D')
+    else:
+        print('=C')
 
 
 def check_side(obj, car_pos, car_1, car_2, size):

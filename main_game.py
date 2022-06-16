@@ -28,7 +28,8 @@ up_road = pygame.image.load('uper_road.png')
 up_road = pygame.transform.scale(up_road,(50,278))
 system = System()
 for i in range(200):
-    carImg.append(pygame.image.load('car2.png'))
+    number = random.randint(2, 4)
+    carImg.append(pygame.image.load('car' + str(number) + '.png'))
 #for i in range(200):
     #carImg[i] = pygame.transform.rotate(carImg[i], entry[2])
 path = ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2']

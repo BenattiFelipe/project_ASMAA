@@ -26,6 +26,7 @@ bg_img = pygame.transform.scale(bg_img,(width,height))
 carImg = []
 up_road = pygame.image.load('uper_road.png')
 up_road = pygame.transform.scale(up_road,(50,278))
+system = System()
 for i in range(200):
     carImg.append(pygame.image.load('car2.png'))
 #for i in range(200):
@@ -34,7 +35,7 @@ path = ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8',
 cars = []
 for i in range(200):
     entry = define_entry(entries)
-    exit = exits[random.randint(0, len(exits)-1)]
+    exit = define_exit(entry)
     position = define_position(entry)
     direction = define_velocity(entry)
     intentions = []
@@ -42,7 +43,7 @@ for i in range(200):
         intentions.append('road5')
     if entry == entry11:
         intentions.append('road10')
-    cars.append(Car('car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, datetime.now, entry, exit))
+    cars.append(Car( system, 'car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, datetime.now, entry, exit))
 
 
 def upper_road(x, y):
@@ -153,7 +154,7 @@ def rotation_type_2(turn, rot1, rot2, vel_x1, vel_y1, vel_x2, vel_y2, new_road, 
     return turn
     
 def isCollision(x1, x2, y1, y2, size_x, size_y, position1, position2):
-    set =  ['road1', 'road2', 'road3', 'road4'] 
+    set =  ['road1', 'road2'] 
     if (position1 in set and position2 not in set) or (position1 not in set and position2 in set):
         return False
     distance_x = abs(x1 - x2)
@@ -225,7 +226,7 @@ running = True
 cross = Cross()
 i = 0
 k = 1
-system = System()
+
 explosions = []
 while running:
     for event in pygame.event.get():
@@ -233,7 +234,7 @@ while running:
             running = False
     i += 1
     bool = True
-    if i == 100:
+    if i == 50:
         i = 0
         inside.append(cars[k])
         k += 1
@@ -288,6 +289,8 @@ while running:
             action = inside[j].make_decision_cross()
             inside[j].turn = define_rotation(inside[j])
             check_rotation(inside[j].turn, inside[j])
+            if action == 'is out':
+                delete.append(inside[j])
 
         '''if inside[j].count > 0:
             inside[j].count += 1

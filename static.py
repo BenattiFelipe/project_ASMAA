@@ -52,9 +52,9 @@ exit10 = [0, 'out1', 'road10']
 exit11 = [0, 'out2', 'road5']
 
 #entries = entries = [entry4, entry5, entry6, entry7, entry8, entry9, entry10, entry11]
-entries = [entry1, entry1, entry2, entry2, entry3, entry3, entry9, entry9, entry9]
+entries = [entry1, entry2, entry3, entry4, entry5, entry6, entry7, entry8, entry9, entry10, entry11]
 #exits = [exit1, exit2, exit3, exit4, exit5, exit6, exit9, exit10, exit11]
-exits = [exit9]
+exits = [exit1, exit2, exit3, exit4, exit5, exit6, exit7, exit8, exit9, exit10, exit11]
 
 def define_position(entry):
     return ([entry[0], entry[1], entry[2], entry[5]])
@@ -63,19 +63,73 @@ def define_velocity(entry):
     #return [0.1*random.randint(5, 10)*entry[3], 0.1*random.randint(5, 10)*entry[4]]
     return [entry[3], entry[4]]
 
+def define_exit(entry):
+    random_number = random.randint(0, 100)
+    if entry == entry1:
+        if random_number <= 25:
+            exits = [exit7]
+        elif random_number <= 40:
+            exits = [exit9]
+        elif random_number <= 90:
+            exits = [exit1, exit2, exit3, exit4, exit5, exit6]
+        else:
+            exits = [exit8, exit10, exit11]
+    elif entry == entry2:
+        if random_number <= 25:
+            exits = [exit8]
+        elif random_number <= 40:
+            exits = [exit9]
+        elif random_number <= 90:
+            exits = [exit1, exit2, exit3, exit4, exit5, exit6]
+        else:
+            exits = [exit7, exit10, exit11]
+    elif entry == entry3 :
+        if random_number <= 20:
+            exits = [exit7]
+        elif random_number <= 40:
+            exits = [exit9]
+        elif random_number <= 90:
+            exits = [exit1, exit2, exit3, exit4, exit5, exit6]
+        else:
+            exits = [exit9, exit10, exit11]
+    elif entry == entry4 or entry == entry5 or entry == entry6 or entry == entry10:
+        if random_number <= 70:
+            exits = [exit4, exit5, exit6]
+        elif random_number <= 90:
+            exits = [exit1, exit2, exit3]
+        elif random_number <= 95:
+            exits = [exit11]
+        else:
+            exits = [exit7, exit8, exit9, exit10]
+    elif entry == entry7 or entry == entry8 or entry == entry9 or entry == entry11:
+        if random_number <= 70:
+            exits = [exit1, exit2, exit3]
+        elif random_number <= 90:
+            exits = [exit4, exit5, exit6]
+        elif random_number <= 95:
+            exits = [exit10]
+        else:
+            exits = [exit7, exit8, exit9, exit11]
+    return exits[random.randint(0, len(exits)-1)]
+    
+
 def define_entry(entries):
     new_entry = []
     for i in range (30):
-        new_entry.append(entries[0])
-        new_entry.append(entries[1])
-        new_entry.append(entries[2])
         new_entry.append(entries[3])
         new_entry.append(entries[4])
         new_entry.append(entries[5])
-    for i in range (10):
         new_entry.append(entries[6])
         new_entry.append(entries[7])
-    return new_entry[random.randint(0, 199)]
+        new_entry.append(entries[8])
+    for i in range(30):
+        new_entry.append(entries[0])
+        new_entry.append(entries[1])
+        new_entry.append(entries[2])
+    for i in range (5):
+        new_entry.append(entries[9])
+        new_entry.append(entries[10])
+    return new_entry[random.randint(0, 279)]
 
 speed_limit = {
     'road1': 30,

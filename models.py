@@ -4,6 +4,7 @@ from static import speed_limit
 class System:
     def __init__(self):
         self.entry1 = 'Empty'
+        self.entry_road_8 = 'Empty'
     def check_empty(self, cars):
         self.entry1 = 'Empty'
         for car in cars:
@@ -44,24 +45,28 @@ def allowed_crosses(car_1, car_2):
         if (car_2.intentions == ['road3']):
             return True
     elif (car_1.pos[3] == 'road3' and car_2.pos[3] == 'road4'):
-        if (car_1.intentions in [[], ['road1']] and car_2.intentions in [[], ['road2']]):
+        if (car_1.intentions in [['road8'], ['road1']] and car_2.intentions in [[], ['road2']]):
             return True
     elif (car_1.pos[3] == 'road4' and car_2.pos[3] == 'road3'):
-        if (car_1.intentions in [[], ['road2']] and car_2.intentions in [[], ['road1']]):
+        if (car_1.intentions in [[], ['road2']] and car_2.intentions in [['road8'], ['road1']]):
             return True
-
 
 class Cross:
     def __init__(self):
         self.roads = ['road1', 'road2', 'road3', 'road4']
     def check_cross(self, system):
         for car in system:
-            if car.pos[0] > 130 and car.pos[0] < 210 and car.pos[1] > 165 and car.pos[1] < 245:
+            if car.pos[0] > 126 and car.pos[0] < 214 and car.pos[1] > 161 and car.pos[1] < 249:
                 return True
     def define_next(self, system):
         if self.check_cross(system):
             return
-        cont = [0, 0, 0, 0]
+        cont = {
+            'road1': 0,
+            'road2': 0,
+            'road3': 0,
+            'road4': 0
+        }
         cars = {
             'road1': [],
             'road2': [],
@@ -70,47 +75,141 @@ class Cross:
         }
         for car in system:
             if car.pos[3] == 'road1' and car.pos[1] < 175:
-                cont[0] += 1
+                cont['road1'] += 1
                 cars['road1'].append(car)
             elif car.pos[3] == 'road2' and car.pos[1] > 235:
-                cont[1] += 1
+                cont['road2'] += 1
                 cars['road2'].append(car)
             elif car.pos[3] == 'road3' and car.pos[0] < 140:
-                cont[2] += 1
+                cont['road3'] += 1
                 cars['road3'].append(car)
             elif car.pos[3] == 'road4' and car.pos[0] > 200:
-                cont[3] += 1
+                cont['road4'] += 1
                 cars['road4'].append(car)
-        if cont == [0, 0, 0, 0]:
+        max = sorted([cont['road1'], cont['road2'], cont['road3'], cont['road4']])
+        if max[3] == 0:
             return
-        max = [cont[0],0]
-        for i in range(4):
-            if cont[i] > max[0]:
-                max = [cont[i], i]
-        if max[1] == 3:
+        agents = [0, 0]
+        if max[3] == cont['road4']:
             for value in cars['road4']:
                 if value.pos[0] < 215:
                     value.your_turn = True
+                    agents[0] = value
                     break
-        if max[1] == 1:
+        elif max[3] == cont['road2']:
             for value in cars['road2']:
                 if value.pos[1] < 250:
                     value.your_turn = True
+                    agents[0] = value
                     break
-        if max[1] == 0:
+        elif max[3] == cont['road1']:
             for value in cars['road1']:
                 if value.pos[1] > 160:
                     value.your_turn = True
+                    agents[0] = value
                     break
-        if max[1] == 2:
+        elif max[3] == cont['road3']:
             for value in cars['road3']:
                 if value.pos[1] > 125:
                     value.your_turn = True
+                    agents[0] = value
                     break
+        if max[2]== 0 or agents[0] == 0:
+            return
+        if max[2] == cont['road4']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[2] == cont['road3']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[2] == cont['road2']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[2] == cont['road1']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        if max[1] == 0:
+            return
+        if max[1] == cont['road4']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[1] == cont['road3']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[1] == cont['road2']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[1] == cont['road1']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        if max[0] == 0:
+            return
+        elif max[0] == cont['road4']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[0] == cont['road3']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[0] == cont['road2']:
+            for value in cars['road4']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        elif max[0] == cont['road1']:
+            for value in cars['road3']:
+                if value.pos[0] < 215:
+                    agents[1] = value
+                    if allowed_crosses(agents[0], agents[1]):
+                        value.your_turn = True
+                        return
+        
 
 
 class Car:
-    def __init__(self, name, pos, direction, vel, intentions, figure, size, turn, count, start_time, entry, exit):
+    def __init__(self,system, name, pos, direction, vel, intentions, figure, size, turn, count, start_time, entry, exit):
+        self.system = system
         self.name = name
         self.pos = pos
         self.direction = direction
@@ -136,6 +235,7 @@ class Car:
                 self.information.append([car.name, car.pos, car.vel, car.direction])
     
     def make_decision_free_road(self):
+        self.your_turn = False 
         if self.give_up:
             return
         if is_out(self):
@@ -220,6 +320,13 @@ class Car:
                 self.vel += marc2
 
     def make_decision_cross(self):
+        if (self.pos[3] == 'road3' and self.pos[1] > 223):
+            self.make_entry()
+            if self.vel == 0:
+                return
+        '''if self.pos[3] == 'road3' and self.pos[0] > 370 and self.system.check_:
+            self.vel = 0
+            return'''
         if self.vel > 30:
             self.vel = 30
         if is_out(self):
@@ -238,6 +345,11 @@ class Car:
                         if marc2 > value[2] - self.vel:
                             marc2 = value[2] - self.vel
                             marc = 0
+            if self.pos[3] == 'road3':
+                if will_crash(self.pos[3], value[1][3], value[2], self.direction, value[3]):
+                    if (self.pos[0] - value[1][0])**2 < 2*((self.size[0])**2):
+                        self.vel = 0
+                        return
         
         if self.pos[3] == 'road4' and self.pos[0] < 215 and self.your_turn == False:
             self.vel = 0
@@ -255,25 +367,25 @@ class Car:
             self.vel = 30 
         if marc != 'do nothing':
             self.vel += marc2
-        if self.intentions == [] and self.pos[3] != self.exit[1]:
-            if self.pos[3] == 'road2':
+        if self.intentions == []:
+            if self.pos[3] == 'road2' and self.your_turn == False:
                 if self.exit[1] == 'road4':
                     self.intentions.append('road4')
                 else:
                     self.intentions.append('road3')
-            if self.pos[3] == 'road1':
+            if self.pos[3] == 'road1' and self.your_turn == False:
                 if self.exit[1] == 'road4':
                     self.intentions.append('road4')
                 else:
                     self.intentions.append('road3')
             if self.pos[3] == 'road3':
-                if self.exit[1] == 'road1':
+                if self.exit[1] == 'road1' and self.your_turn == False:
                     self.intentions.append('road1')
-                elif self.exit[1] == 'road2':
+                elif self.exit[1] == 'road2' and self.your_turn == False:
                     self.intentions.append('road2')
                 else:
                     self.intentions.append('road8')
-            if self.pos[3] == 'road4':
+            if self.pos[3] == 'road4'and self.your_turn == False:
                 if self.exit[1] == 'road1':
                     self.intentions.append('road1')
                 else:
@@ -321,6 +433,16 @@ class Car:
                 self.vel = 0
             else:
                 self.vel = 40
+        if self.pos[3] == 'road3' and self.pos[1] >= 220 and self.pos[1] <= 235:
+            enter = True
+            for value in self.information:
+                if value[1][3] == 'road8' and value[1][0] - self.size[0] < self.pos[0]:
+                    enter = False
+            if not enter:
+                self.vel = 0
+            else:
+                self.vel = 40
+
         
 
                     
@@ -334,6 +456,10 @@ def is_out(car):
     elif car.pos[3] == 'out1' and car.pos[0] >= 939:
         return True
     elif car.pos[3] == 'road4' and car.pos[0] < -23:
+        return True
+    elif car.pos[3] == 'road1' and car.pos[1] > 401:
+        return True
+    elif car.pos[3] == 'road2' and car.pos[1] < -23:
         return True
     return False
 
@@ -357,6 +483,10 @@ def is_ahead(pos1, pos2, dir1, dir2):
         elif pos2[1] < pos1[1] and dir1[1] < 0 and dir2[1] < 0:
             return True
     return False
+
+def will_crash(pos1, pos2, vel, dir1, dir2):
+    if pos1 == pos2 and vel == 0 and dir1!=dir2 and dir1[0] != 0:
+        return True
 
 def right_position(car):
     if car.pos[3] == car.exit[1]:

@@ -19,10 +19,14 @@ class Connection():
 
 
 class Entry():
-    def __init__(self,name,pos,tax,grid):
+    def __init__(self,name,pos,tax,grid,line=[]):
         self.name = name
-        self.pos = (pos[0],(pos[1][0],pos_to_index(pos[1][1],pos[0].width,grid)))
+        pos = (pos[0],(pos[1][0],pos_to_index(pos[1][1],pos[0].width,grid)))
+        self.road = pos[0]
+        self.lane = pos[1][0]
+        self.pos = pos[1][1]
         self.tax = tax
+        self.line = line
     
     def effective_tax(self,tax):
         self.tax = tax
@@ -30,8 +34,10 @@ class Entry():
 class Exit():
     def __init__(self,name,nlength,pos,speedlimit,grid):
         self.name = name
-        self.nlength = nlength
-        self.pos = (pos[0],(pos[1][0],pos_to_index(pos[1][1],pos[0].width,grid)))  # pos = (Road, pos=(way,posx))
+        self.nlength = nlength  # pos = (Road, pos=(way,posx))
+        self.road = pos[0]
+        self.lane = pos[1][0]
+        self.pos = pos_to_index(pos[1][1],pos[0].width,grid)
         self.speedlimit = speedlimit
 
 class Cross():

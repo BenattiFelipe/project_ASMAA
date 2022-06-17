@@ -155,8 +155,6 @@ class Car:
                 self.vel = 0
             else:
                 self.vel = 40
-        
-
                     
 def is_out(car):
     if car.pos[3] in ['road5', 'road7', 'road6'] and car.pos[0] < -23:

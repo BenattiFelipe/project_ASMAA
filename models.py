@@ -5,12 +5,7 @@ class System:
     def __init__(self):
         self.entry1 = 'Empty'
         self.entry_road_8 = 'Empty'
-    def check_empty(self, cars):
-        self.entry1 = 'Empty'
-        for car in cars:
-            if car.pos[3] == 'entry1':
-                self.entry1 = 'Full'
-                break
+        self.time = 0
 
 
 def allowed_crosses(car_1, car_2):
@@ -219,7 +214,7 @@ class Car:
         self.size = size
         self.turn = turn
         self.count = count
-        self.start_time = start_time
+        self.time = start_time
         self.entry = entry
         self.exit = exit
         self.your_turn = False
@@ -236,12 +231,13 @@ class Car:
                 self.information.append([car.name, car.pos, car.vel, car.direction])
     
     def make_decision_free_road(self):
-        self.your_turn = False
-        if self.give_up:
-            return
         if is_out(self):
             #print('is out, ', self.pos[3], self.exit[1])
             return 'is out'
+        self.your_turn = False
+        if self.give_up:
+            return
+        
         if self.change_lane == False:
             self.count += 1
         if self.change_lane == False and self.count >= 100:
@@ -260,7 +256,7 @@ class Car:
                     return     
             self.vel = 30
                 
-        if right_position(self):
+        if right_position(self) or self.give_up:
             marc = 'do nothing'
             marc2 = 10000
             for value in self.information:
@@ -270,12 +266,12 @@ class Car:
                         if abs(self.pos[0] - value[1][0]) < 2*self.size[0]:
                             marc2 -= 1
                         marc = 0
-            if (marc == 'do nothing' and self.vel < speed_limit[self.pos[3]]):
+            if (marc == 'do nothing' and self.vel < speed_limit[self.pos[3]] - 0.2):
                 self.vel += 0.1
             elif marc != 'do nothing':
                 
                 self.vel += marc2
-        if self.intentions == [] and self.pos[3] != self.exit[1]:
+        if self.intentions == [] and self.pos[3] != self.exit[1] and not self.give_up:
             if self.pos[3] == 'road5':
                 if self.exit[1] != 'out2':
                     self.intentions.append('road6')
@@ -308,7 +304,7 @@ class Car:
                     self.intentions.append('road9')
                 else:
                     self.intentions.append('out1')
-        else:
+        elif not self.give_up:
             marc = True  
             if marc and (self.pos[3] == 'return1' or self.pos[3] == 'return2' or self.pos[3] == 'entry1' or self.pos[3] == 'entry2'):
                 self.change_lane = False
@@ -331,12 +327,16 @@ class Car:
                     if marc2 > value[2] - self.vel:
                         marc2 = value[2] - self.vel
                         marc = 0
-            if (marc == 'do nothing' and self.vel < speed_limit[self.pos[3]]):
-                self.vel += 2 
+            if (marc == 'do nothing' and self.vel < speed_limit[self.pos[3]] -0.2):
+                self.vel += 0.1
             elif marc != 'do nothing':
                 self.vel += marc2
 
     def make_decision_cross(self):
+        if self.vel > 30:
+            self.vel = 30
+        if is_out(self):
+            return 'is out'
         if (self.pos[3] == 'road3' and self.pos[1] > 223):
             self.make_entry()
             if self.vel == 0:
@@ -344,10 +344,7 @@ class Car:
         '''if self.pos[3] == 'road3' and self.pos[0] > 370 and self.system.check_:
             self.vel = 0
             return'''
-        if self.vel > 30:
-            self.vel = 30
-        if is_out(self):
-            return 'is out'
+        
         marc = 'do nothing'
         marc2 = 10000
         for value in self.information:
@@ -384,7 +381,7 @@ class Car:
             self.vel = 30 
         if marc != 'do nothing':
             self.vel += marc2
-        if self.intentions == []:
+        if self.intentions == [] and self.pos[3] != self.exit[1]:
             if self.pos[3] == 'road2' and self.your_turn == False:
                 if self.exit[1] == 'road4':
                     self.intentions.append('road4')
@@ -431,7 +428,7 @@ class Car:
             if not enter:
                 self.vel = 0
             else:
-                self.vel = 40
+                self.vel = 30
         elif self.pos[3] == 'return2' and self.pos[1] <= 195 and self.pos[1] >= 175:
             enter = True
             for value in self.information:
@@ -458,7 +455,7 @@ class Car:
             if not enter:
                 self.vel = 0
             else:
-                self.vel = 40
+                self.vel = 30
 
         
 

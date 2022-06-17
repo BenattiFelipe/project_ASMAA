@@ -64,7 +64,7 @@ def define_velocity(entry):
     return [entry[3], entry[4]]
 
 def define_exit(entry):
-    random_number = random.randint(0, 100)
+    random_number = random.randint(1, 100)
     if entry == entry1:
         if random_number <= 25:
             exits = [exit7]
@@ -142,10 +142,10 @@ speed_limit = {
     'road8': 50,
     'road9': 50,
     'road10': 50,
-    'entry1': 0,
-    'entry2': 0,
-    'out1':0,
-    'out2': 0,
-    'return1': 0,
-    'return2':0
+    'entry1': 50,
+    'entry2': 50,
+    'out1':50,
+    'out2': 50,
+    'return1': 50,
+    'return2':50
 }

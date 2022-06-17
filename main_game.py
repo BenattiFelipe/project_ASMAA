@@ -4,7 +4,8 @@ import numpy as np
 from static import *
 import math
 import random
-from datetime import datetime
+import matplotlib.pyplot as plt
+from datetime import date, datetime
 
 #['road1', 'road3', 'pass2', 'road8', 'road9', 'road10', 'road9', 'road8', 'pass4', 'road7', 'pass3', 'road8', 'pass4', 'road7', 'pass1', 'road4', 'road2']
 
@@ -27,14 +28,13 @@ carImg = []
 up_road = pygame.image.load('uper_road.png')
 up_road = pygame.transform.scale(up_road,(50,278))
 system = System()
-for i in range(200):
+for i in range(1000):
     number = random.randint(2, 4)
     carImg.append(pygame.image.load('car' + str(number) + '.png'))
 #for i in range(200):
     #carImg[i] = pygame.transform.rotate(carImg[i], entry[2])
-path = ['road3', 'road8', 'road9', 'road10', 'road9', 'road8', 'road7', 'road8', 'road7', 'road6', 'road5', 'road6', 'road7', 'road4', 'road2']
 cars = []
-for i in range(200):
+for i in range(1000):
     entry = define_entry(entries)
     exit = define_exit(entry)
     position = define_position(entry)
@@ -44,14 +44,14 @@ for i in range(200):
         intentions.append('road5')
     if entry == entry11:
         intentions.append('road10')
-    cars.append(Car( system, 'car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, datetime.now, entry, exit))
+    cars.append(Car( system, 'car#' + str(i), position, direction, random.randint(30, 50), intentions, pygame.transform.rotate(carImg[i], position[2]),[24,12], 0, 0, 0, entry, exit))
 
 
 def upper_road(x, y):
     screen.blit(up_road, (x, y))
 
 def vehicle(x, y, j):
-    screen.blit(cars[j].figure, (x, y))
+    screen.blit(inside[j].figure, (x, y))
 
 def explosion(x, y, j):
     screen.blit(explosions[j][2], (x, y))
@@ -227,23 +227,38 @@ running = True
 cross = Cross()
 i = 0
 k = 1
-
+q = 0
+analyses = {
+    'reached objective': [],
+    'unreached objective': [],
+    'crashed': [],
+    'time': [],
+    'surpassed speed limit': [],
+}
+colision_location = []
 explosions = []
+start_time = datetime.now()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     i += 1
     bool = True
-    if i == 50:
+    system.time += 1
+    if inside == []:
+        break
+    if i == 45:
         i = 0
-        inside.append(cars[k])
-        k += 1
+        if k < 1000:
+            inside.append(cars[k])
+            k += 1
     window.blit(bg_img,(0,0))
     delete = []
     render = []
     cross.define_next(inside)
     for j in range(len(inside)):
+
+        inside[j].time += 1
 
 
         carX_change = (1/50)*inside[j].vel*inside[j].direction[0]
@@ -280,7 +295,7 @@ while running:
             action = inside[j].make_decision_free_road()
 
             if action == 'is out':
-                delete.append(inside[j])
+                delete.append([inside[j], 'out'])
             if action == 'change lane' or action == 'get out':
                 inside[j].turn = define_rotation(inside[j])
                 check_rotation(inside[j].turn, inside[j])  
@@ -291,23 +306,29 @@ while running:
             inside[j].turn = define_rotation(inside[j])
             check_rotation(inside[j].turn, inside[j])
             if action == 'is out':
-                delete.append(inside[j])
+                delete.append([inside[j], 'out'])
 
-        '''if inside[j].count > 0:
-            inside[j].count += 1
-        if (inside[j].turn == turn10 or inside[j].turn == turn11 or inside[j].turn == turn12 or inside[j].turn == turn13 or inside[j].turn == turn15 or inside[j].turn == turn16 or inside[j].turn == turn17 or inside[j].turn == turn18) and inside[j].count == 0:
-            inside[j].count = 1
-        if inside[j].count == 0 or inside[j].count > 100:
-            inside[j].count = 0'''
             
         for m in range(len(inside)):
             if inside[m] != inside[j]:            
                 if isCollision(inside[j].pos[0], inside[m].pos[0], inside[j].pos[1], inside[m].pos[1], 16, 16, inside[j].pos[3], inside[m].pos[3]):
                     explosions.append([(inside[j].pos[0] + inside[m].pos[0])/2, (inside[j].pos[1] + inside[m].pos[1])/2, pygame.image.load('bang.png'), 0])
-                    if inside[m] not in delete:
-                        delete.append(inside[m])
-                    if inside[j] not in delete:
-                        delete.append(inside[j])
+                    flag = False
+                    
+                    for value in delete:
+                        car = value[0]
+                        if car.name == inside[m].name:
+                            flag = True  
+                    if not flag:
+                        colision_location.append(inside[m].pos[3])
+                        delete.append([inside[m], 'crash'])    
+                    flag = False   
+                    for value in delete:
+                        car = value[0]
+                        if car.name == inside[j].name:
+                            flag = True  
+                    if not flag:
+                        delete.append([inside[j], 'crash'])  
         if inside[j].pos[3] not in ['road1', 'road2', 'road3', 'road4']:
             render.append([inside[j], j, True])
         else:
@@ -326,21 +347,201 @@ while running:
         if explosions[m][3] <= 20:
             explosions[m][3] += 1
             explosion(explosions[m][0], explosions[m][1], m)
-        #else:
-            #del explosions[m]
-    #delete = reversed(sorted(delete))
-
+    for car in inside:
+        if car.vel > speed_limit[car.pos[3]]:
+            if car.name not in 'surpassed speed limit':
+                print(car.name, car.vel, speed_limit[car.pos[3]])
+                analyses['surpassed speed limit'].append(car.name)
     for value in delete:
-        k -= 1
+        if value[1] == 'crash':
+            analyses['crashed'].append(value[0])
+        else:
+            if value[0].pos[3] == value[0].exit[1]:
+                analyses['reached objective'].append(value[0])
+            else:
+                analyses['unreached objective'].append(value[0])
+        #k -= 1
         inside2 = []
         for carro in inside:
             
-            if carro.name != value.name:
+            if carro.name != value[0].name:
                 inside2.append(carro)
         inside = inside2
-        car2 = []
-        for carro in cars:
-            if carro.name != value.name:
-                car2.append(carro)
-        cars = car2
+
     pygame.display.update()
+
+end_time = datetime.now()
+time_factor = (end_time-start_time).total_seconds()/system.time
+print(time_factor)
+print((end_time-start_time).total_seconds())
+print(system.time)
+
+for car in inside:
+    print(car.exit)
+analyses['time'].append(system.time)
+for value in analyses['crashed']:
+    print(value.name)
+print('unreached:{}'.format(len(analyses['unreached objective'])))
+print('reached:{}'.format(len(analyses['reached objective'])))
+print('crashed:{}'.format(len(analyses['crashed'])))
+print(analyses['surpassed speed limit'])
+
+
+def make_autopct(values):
+    def my_autopct(pct):
+        total = sum(values)
+        val = int(round(pct*total/100.0))
+        return '{p:.1f}%  ({v:d})'.format(p=pct,v=val)
+    return my_autopct
+labels = 'Reached', 'Unreached', 'Crashed'
+sizes = [len(analyses['reached objective']), len(analyses['unreached objective']), len(analyses['crashed'])]
+
+colors = ['#00876c','#4c9c85','#78b19f','#a0c6b9', '#c8dbd5','#f1f1f1','#f1cfce','#eeadad','#e88b8d','#df676e','#d43d51']
+   
+pie = plt.pie(sizes, startangle=0, autopct=make_autopct(sizes), pctdistance=0.9, radius=1.2)
+plt.title('General Overview', weight='bold', size=14)
+
+plt.legend(pie[0],labels, bbox_to_anchor=(1,0.5), loc="center right", fontsize=10, 
+           bbox_transform=plt.gcf().transFigure)
+plt.subplots_adjust(left=0.0, bottom=0.1, right=0.85)
+
+plt.savefig('results_average_flow/general overview')
+plt.show()
+
+
+
+free_roads_in = [entry4, entry5, entry6, entry7, entry8, entry9, entry10, entry11]
+crosses_in = [entry1, entry2, entry3]
+free_roads_out = [exit1, exit2, exit3, exit4, exit5, exit6, exit10, exit11]
+crosses_out = [exit7, exit8, exit9]
+
+aux0 = [0,0,0,0,0,0,0,0,0,0,0]
+aux1 = [0,0,0,0,0,0,0,0,0,0,0]
+aux2 = [0,0,0,0,0,0,0,0,0,0,0]
+aux3 = [[0,0,0] for i in range(11)]
+for i in range(11):
+    for car in analyses['reached objective']:
+        if car.entry == entries[i]:
+            aux1[i] += 1
+            aux3[i][0] += 1
+    for car in analyses['unreached objective']:
+        if car.entry == entries[i]:
+            aux2[i] += 1
+            aux3[i][1] += 1
+    for car in analyses['crashed']:
+        if car.entry == entries[i]:
+            aux0[i] += 1
+            aux3[i][2] += 1
+free_road_to_free_road = [0,0,0]
+free_road_to_cross = [0,0,0]
+cross_to_free_road = [0,0,0]
+cross_to_cross = [0,0,0]
+time_bank = [0,0,0]
+
+for car in analyses['reached objective']:
+    time_bank[0] += car.time*time_factor
+    if car.entry in free_roads_in and car.exit in free_roads_out:
+        free_road_to_free_road[0] += 1
+    if car.entry in free_roads_in and car.exit in crosses_out:
+        free_road_to_cross[0] += 1
+    if car.entry in crosses_in and car.exit in free_roads_out:
+        cross_to_free_road[0] += 1
+    if car.entry in crosses_in and car.exit in crosses_out:
+        cross_to_cross[0] += 1
+for car in analyses['unreached objective']:
+    time_bank[1] += car.time*time_factor
+    if car.entry in free_roads_in and car.exit in free_roads_out:
+        free_road_to_free_road[1] += 1
+    if car.entry in free_roads_in and car.exit in crosses_out:
+        free_road_to_cross[1] += 1
+    if car.entry in crosses_in and car.exit in free_roads_out:
+        cross_to_free_road[1] += 1
+    if car.entry in crosses_in and car.exit in crosses_out:
+        cross_to_cross[1] += 1
+for car in analyses['crashed']:
+    time_bank[2] += car.time*time_factor
+    if car.entry in free_roads_in and car.exit in free_roads_out:
+        free_road_to_free_road[2] += 1
+    if car.entry in free_roads_in and car.exit in crosses_out:
+        free_road_to_cross[2] += 1
+    if car.entry in crosses_in and car.exit in free_roads_out:
+        cross_to_free_road[2] += 1
+    if car.entry in crosses_in and car.exit in crosses_out:
+        cross_to_cross[2] += 1
+time_bank[0] = time_bank[0]/len(analyses['reached objective'])
+time_bank[1] = time_bank[1]/len(analyses['unreached objective'])
+time_bank[2] = time_bank[2]/len(analyses['crashed'])
+
+titles = ['Free road to free road', 'Free road to cross', 'Cross to free road', 'Cross to cross']
+plots = [free_road_to_free_road, free_road_to_cross, cross_to_free_road, cross_to_cross]
+for i in range (4):
+    sizes = plots[i]
+    
+    pie = plt.pie(sizes, startangle=0, autopct=make_autopct(sizes), pctdistance=0.9, radius=1.2)
+    plt.title(titles[i], weight='bold', size=14)
+    plt.legend(pie[0],labels, bbox_to_anchor=(1,0.5), loc="center right", fontsize=10, 
+           bbox_transform=plt.gcf().transFigure)
+    plt.subplots_adjust(left=0.0, bottom=0.1, right=0.85)
+    plt.savefig('results_average_flow/'+titles[i])
+    plt.show()
+
+data = {'Reached goal':time_bank[0], 'Do not reached goal':time_bank[1], 'Crashed':time_bank[2]}
+courses = list(data.keys())
+values = list(data.values())
+  
+fig = plt.figure(figsize = (10, 5))
+ 
+# creating the bar plot
+plt.bar(courses, values,
+        width = 0.4)
+ 
+plt.xlabel("Results")
+plt.ylabel("Average Time")
+plt.title("Average time and Results")
+plt.savefig('results_average_flow/average time')
+plt.show()
+
+colision_map = [0, 0]
+for value in colision_location:
+    if value in ['road1', 'road2', 'road3', 'road4']:
+        colision_map[0] += 1
+    else:
+        colision_map[1] += 1
+
+sizes = colision_map
+    
+pie = plt.pie(sizes, startangle=0, autopct=make_autopct(sizes), pctdistance=0.9, radius=1.2)
+plt.title('Overview of the colisions', weight='bold', size=14)
+plt.legend(pie[0],['Crosses', 'Free roads'], bbox_to_anchor=(1,0.5), loc="center right", fontsize=10, 
+    bbox_transform=plt.gcf().transFigure)
+plt.subplots_adjust(left=0.0, bottom=0.1, right=0.85)
+
+plt.savefig('results_average_flow/colisions overview')
+plt.show()
+
+labels2 = ['entry' + str(i) for i in range(1, 12)]
+aux = [aux0, aux1, aux2]
+ocurences = ['Crash', 'Reach Objective', 'Do not Reach Objective']
+for i in range(3):
+    sizes = aux[i]
+    
+    pie = plt.pie(sizes, startangle=0, autopct=make_autopct(sizes), pctdistance=0.9, radius=1.2, colors=colors)
+    plt.title(ocurences[i], weight='bold', size=14)
+    plt.legend(pie[0],labels2, bbox_to_anchor=(1,0.5), loc="center right", fontsize=10, 
+           bbox_transform=plt.gcf().transFigure)
+    plt.subplots_adjust(left=0.0, bottom=0.1, right=0.85)
+    plt.savefig('results_average_flow/ocurences')
+    plt.show()
+
+for i in range(11):
+    sizes = aux3[i]
+
+    pie = plt.pie(sizes, startangle=0, autopct=make_autopct(sizes), pctdistance=0.9, radius=1.2)
+    plt.title('Entry' + str(i + 1), weight='bold', size=14)
+    plt.legend(pie[0],labels, bbox_to_anchor=(1,0.5), loc="center right", fontsize=10, 
+           bbox_transform=plt.gcf().transFigure)
+    plt.subplots_adjust(left=0.0, bottom=0.1, right=0.85)
+    plt.savefig('results_average_flow/entry'+str(i+1))
+    plt.show()
+
+print(len(analyses['surpassed speed limit']))
